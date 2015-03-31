@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Model Rocket Simulator</title>
+		<link href="http://fonts.googleapis.com/css?family=Bitter" rel="stylesheet" type="text/css"/>
+		<link href="http://fonts.googleapis.com/css?family=Play" rel="stylesheet" type="text/css"/>
+		<link rel="stylesheet" href="style.css" type="text/css">
+		<!--<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>-->
+		<!--<script src="http://code.highcharts.com/highcharts.js"></script>-->
+		<script src="jquery-1.8.2.min.js"></script>
+		<script src="highcharts.js"></script>
+		<script src="CSPL.js"></script>
+		<script src="spin.min.js"></script>
+		<script src="modelrocketsimulator.js"></script>
+	</head>
+	<body onload="init();">
+		<div id="container">
+			<h1>Model Rocket Simulator</h1>
+			<div id="step1">
+				<h2>Step 1. Design your rocket</h2>
+				<div id="status1" class="status"></div>
+				<div id="status2" class="status"></div>
+				<table>
+					<tr>
+						<th>Rocket mass without engine</th>
+						<td><input type="text" name="m" id="m" value="34.0" onkeyup="heavycheck();"/><span class="unit">g</span></td>
+					</tr>
+					<tr>
+						<th>Diameter of rocket, widest part</th>
+						<td><input type="text" name="d" id="d" value="25.0" onkeyup="diametercheck();"/><span class="unit">mm</span></td>
+					</tr>
+					<tr>
+						<th>Diameter of parachute</th>
+						<td><input type="text" name="d2" id="d2" value="30.5"/><span class="unit">cm</span></td>
+					</tr>
+				</table>
+			</div>
+			<div id="step2">
+				<h2>Step 2. Choose an engine</h2>
+				<div id="thrustcurve"></div>
+				<div class="engine abc selected" onclick="selectEngine('A8-3',this);">A8-3</div>
+				<div class="engine abc" onclick="selectEngine('B6-4',this);">B6-4</div>
+				<!--<div class="engine abc" onclick="selectEngine('C2-0',this);">C2-0</div>-->
+				<div class="engine abc" onclick="selectEngine('C6-5',this);">C6-5</div>
+				<!--<div class="engine abc" onclick="selectEngine('D3-0',this);">D3-0</div>-->
+				<div class="engine d" onclick="selectEngine('D12-3',this);">D12-3</div>
+				<!--<div class="engine d" onclick="selectEngine('TEST1-0',this);">TEST1-0</div>-->
+				<input type="hidden" name="engine" id="engine" value="A8-3"/>
+				<p>Number of engines: <input type="number" id="noe" value="1" min="1" max="7"/></p>
+			</div>
+			<div id="step3">
+				<h2>Step 3.</h2>
+				<button id="launchbutton" onclick="start();"/>Launch</button>
+			</div>
+			<div id="output">
+				<h2><a id="results">Flight Simulation Results</a></h2>
+				<div id="status3" class="status"></div>
+				<div style="width:50%;float:left;">
+					<table id="resulttable">
+						<tr>
+							<th>Ignition time</th>
+							<td id="ignition"></td>
+							<td class="unit">s</td>
+						</tr>
+						<tr>
+							<th>&nbsp;</th>
+							<td>&nbsp;</td>
+						</tr>
+						<tr>
+							<th>Liftoff time</th>
+							<td id="liftoff"></td>
+							<td class="unit">s</td>
+						</tr>
+						<tr>
+							<th>&nbsp;</th>
+							<td>&nbsp;</td>
+						</tr>
+						<tr>
+							<th>Burnout time</th>
+							<td id="burnout_time"></td>
+							<td class="unit">s</td>
+						</tr>
+						<tr>
+							<th>Burnout altitude</th>
+							<td id="burnout_altitude"></td>
+							<td class="unit">m</td>
+						</tr>
+						<tr>
+							<th>Burnout velocity</th>
+							<td id="burnout_velocity"></td>
+							<td class="unit">m/s</td>
+						</tr>
+						<tr>
+							<th>Total impulse</th>
+							<td id="burnout_totalimp"></td>
+							<td class="unit">N·s<span id="ticlass"></span></td>
+						</tr>
+						<tr>
+							<th>Specific impulse</th>
+							<td id="burnout_speciimp"></td>
+							<td class="unit">s</td>
+						</tr>
+						<tr>
+							<th>Exhaust velocity</th>
+							<td id="burnout_exhauvel"></td>
+							<td class="unit">m/s</td>
+						</tr>
+						<tr>
+							<th>&nbsp;</th>
+							<td>&nbsp;</td>
+						</tr>
+						<tbody id="apogee">
+							<tr>
+								<th>Apogee<sup style="font-size:0.5em">1</sup> time</th>
+								<td id="apogee_time"></td>
+								<td class="unit">s</td>
+							</tr>
+							<tr>
+								<th>Apogee altitude</th>
+								<td id="apogee_altitude"></td>
+								<td class="unit">m</td>
+							</tr>
+							<tr>
+								<th>&nbsp;</th>
+								<td>&nbsp;</td>
+							</tr>
+						</tbody>
+						<tbody id="deploy">
+							<tr>
+								<th>Deploy time</th>
+								<td id="deploy_time"></td>
+								<td class="unit">s</td>
+							</tr>
+							<tr>
+								<th>Deploy altitude</th>
+								<td id="deploy_altitude"></td>
+								<td class="unit">m</td>
+							</tr>
+							<tr>
+								<th>Deploy velocity</th>
+								<td id="deploy_velocity"></td>
+								<td class="unit">m/s</td>
+							</tr>
+							<tr>
+								<th>&nbsp;</th>
+								<td>&nbsp;</td>
+							</tr>
+						</tbody>
+						<tr>
+							<th>Landing time</th>
+							<td id="landing_time"></td>
+							<td class="unit">s</td>
+						</tr>
+						<tr>
+							<th>Landing velocity</th>
+							<td id="landing_velocity"></td>
+							<td class="unit">m/s</td>
+						</tr>
+						<tr>
+							<td colspan="3">
+								<div style="border-top:1px solid black;padding-left:20px;font-size:0.5em;float:left;margin-top:20px;"><sup>1</sup>Apogee = maximum altitude</div>
+							</td>
+						</tr>
+					</table>
+				</div>
+				<div style="width:50%;float:left;">
+					<div id="altitude"></div>
+				</div>
+				<div id="output_graphs">
+					<div class="left">
+						<div style="padding-right:15px;">
+							<div id="velocity"></div>
+							<div id="acceleration"></div>
+							<div id="gees"></div>
+							<div id="temp"></div>
+						</div>
+					</div>
+					<div class="right">
+						<div style="padding-left:15px;">
+							<div id="thrust"></div>
+							<div id="drag"></div>
+							<div id="mass"></div>
+						</div>
+					</div>
+					<!--
+					<div id="force"></div>
+					<div id="weight"></div>
+					-->
+				</div>
+				<div style="clear:both;"><!-- --></div>
+			</div>
+			<div style="clear:both;"><!-- --></div>
+			<div id="footer">By Steen Eiler Jørgensen 2014&minus;2015 - <a href="#" onclick="$('#about').slideToggle();$('html, body').animate({scrollTop: $('#about').offset().top}, 2000);return false;">About</a> - Charts by <a href="http://www.highcharts.com/">Highcharts</a> - Cubic Spline Interpolation by <a href="http://blog.ivank.net/">Ivan Kuckir</a></div>
+			<div id="about">
+				<h2>About</h2>
+				<p>This is a very simple model rocket simulation program. It takes <a href="http://www.nar.org/standards-and-testing-committee/nar-certified-motors/">published thrust curve data</a> and interpolates that using cubic splines.</p>
+				<p>Features:</p>
+				<ul>
+					<li>dt = 10 ms</li>
+					<li>g = 9.8 m/s²</li>
+					<li>Air density calculation is based on a temperature lapse rate of -0.0065 K/m, so only valid up until 11 km.</li>
+					<li>C<sub>d</sub> = 0.65 (<a href="http://users.cybercity.dk/~dko7904/DARK/note/aeronote.pdf" target="_blank">DARK</a> legacy)</li>
+				</ul>
+				<p>Future improvements I'm considering:</p>
+				<ul>
+					<li>Complete modeling of the International Standard Atmosphere</li>
+					<li>More detailed gravity model: Decreasing gravitational acceleration with altitude</li>
+					<li>More rocket engines :)</li>
+					<li>Real time simulation (with JavaScript!)</li>
+					<li>Two-dimensional simulation for wind, downrange distance and gravity turn</li>
+					<li>Actually measuring the drag coefficient of a real rocket</li>
+					<li>Variable timesteps (Runge-Kutta, anyone?)</li>
+					<li>Support for engine clusters and multistage rockets</li>
+				</ul>
+				<p>Let me know what you think!</p>
+				<p><a href="https://twitter.com/oz1sej">Twitter</a> | <a href="mailto:rocksim@silicium.dk">Email</a></p>
+			</div>
+		</div>
+		<script type="text/javascript">
+		  var _gaq = _gaq || [];
+		  _gaq.push(['_setAccount', 'UA-21343177-1']);
+		  _gaq.push(['_trackPageview']);
+
+		  (function() {
+		    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		  })();
+		</script>
+	</body>
+</html>

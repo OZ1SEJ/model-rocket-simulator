@@ -1,0 +1,210 @@
+body
+{
+	background-color: 	#ADD8E6;
+	font-family:		Bitter,times,'times new roman';
+	font-size:			20px;
+}
+#waiting
+{
+	background-color:	white;
+	border:				1px solid black;
+	left:				0;
+	margin-left:		35%;
+	margin-right:		35%;
+	padding:			40px 40px 20px 40px;
+	position:			absolute;
+	right:				0;
+	top:				50%;
+	text-align:			center;
+	z-index:			1000;
+}
+#container
+{
+	background-color: 	#F5F5DC;
+	border:				1px solid #A5A52A;
+	border-radius:		10px;
+	padding:			20px;
+	margin:				auto;
+	min-width: 			900px;
+	max-width:			1200px;
+	width:				80%;
+}
+h1
+{
+	font-family:		Bitter,'sans-serif';
+	text-align: 		center;
+	font-size:			3em;
+
+}
+h2
+{
+	font-family:		Play,'sans-serif';
+	font-size: 			2em;
+	margin:				0;
+	padding:		 	20px 0 20px 0;
+}
+th
+{
+	font-weight:		normal;
+	text-align: 		left;
+}
+td
+{
+	text-align: 		right;
+}
+span.unit
+{
+	display: 			inline-block;
+	padding-left: 		6px;
+	text-align: 		left;
+	width:				2em;
+}
+input
+{
+	font-family:		Bitter,'sans-serif';
+	font-size:			1em;
+	margin-left: 		1em;
+	text-align:			right;
+	width:				4em;
+}
+#thrustcurve
+{
+	float:				right;
+	height:				373px;
+}
+select
+{
+	font-family:		Play,'sans-serif';
+	font-size:			2em;
+}
+div.engine
+{
+	background-color: 	#DEB887;
+	border:				1px solid #000000;
+	color:				#008000;
+	cursor:				pointer;
+	font-family: 		helvetica,arial,sans-serif;
+	font-size:			1.3em;
+	height:				50px;
+	margin:				0 0 20px 0;
+	width:				256px;
+}
+div.engine.abc
+{
+	height:				49px;
+	padding:			21px 0 0 22px;
+}
+div.engine.d
+{
+	height:				62px;
+	padding:			32px 0 0 22px;
+}
+div.engine.selected
+{
+	font-weight: 		bold;
+}
+div.engine:last
+{
+	margin:				0;
+}
+div#step2 p input
+{
+	width:			30px;
+}
+div#step3
+{
+	clear:both;
+	margin:0;
+}
+div#step3 h2
+{
+	clear:				both;
+	margin:				0;
+	padding:			20px 0 0 0;
+}
+div#step3 button
+{
+	margin:				auto;
+	cursor:				pointer;
+	font-size:			2em;
+	font-weight: 		bold;
+	text-transform: 	uppercase;
+	background-color:	#0C0;
+	padding:			0.5em;
+	display:			block;
+	border:				2px solid #000000;
+	border-radius:		10px;
+}
+div#step3 button:hover
+{
+	background-color:	#0D0;
+}
+div.status
+{
+	background-color:	#FFD700;
+	padding:			0.5em;
+	display:			none;
+	border:				1px solid #000000;
+	margin:				auto;
+	margin-top:			20px;
+	margin-bottom:		20px;
+}
+div#output
+{
+	display:			none;
+	clear:				both;
+	margin-top:			80px;
+	width:100%;
+}
+table#resulttable
+{
+	float:				left;
+	min-width:			300px;
+	width:				50%;
+	white-space: nowrap;
+}
+table#resulttable th
+{
+	padding-right:	60px;
+}
+table#resulttable td.unit
+{
+	padding-left:		10px;
+	text-align: 		left;
+	width:				auto;
+}
+div#output_graphs
+{
+	clear:				both;
+	margin-top:			20px;
+}
+div#output_graphs div.left
+{
+	float:				left;
+	width:				50%;
+}
+div#output_graphs div.right
+{
+	float:				left;
+	width:				50%;
+}
+div#output_graphs div div
+{
+	margin-top: 20px;
+}
+div#footer
+{
+	font-size:			0.65em;
+	margin-top:			40px;
+	text-align:			center;
+}
+div#about
+{
+	display:			none;
+	font-size:			0.65em;
+	width:				50%;
+}
+div#about h2
+{
+	padding-bottom:		0;
+}
