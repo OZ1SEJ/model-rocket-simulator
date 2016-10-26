@@ -1,36 +1,13 @@
 var g   = 9.8; // [m/s²]
-
-// Atmosphere
-var p0 = 101325;    // Pa
-var L  = -0.0065;    // K/m
-var T0 = 288.15;    // K
-var M  = 0.0289644; // kg/mol
-var R  = 8.31447;   // J/(mol·K)
+var rho = 1.2; // [kg/m³]
 
 var freq = 100;
 var dt   = 1/freq;
 
-var enginesData = {};
-enginesData["A8"]  = [[0,0],[0.041,0.512],[0.084,2.115],[0.127,4.358],[0.166,6.794],[0.192,8.588],[0.206,9.294],[0.226,9.73],[0.236,8.845],[0.247,7.179],[0.261,5.063],[0.277,3.717],[0.306,3.205],[0.351,2.884],[0.405,2.499],[0.467,2.371],[0.532,2.307],[0.589,2.371],[0.632,2.371],[0.652,2.243],[0.668,1.794],[0.684,1.153],[0.703,0.448],[0.73,0]];
-enginesData["B6"]  = [[0,0],[0.023,0.688],[0.057,2.457],[0.089,4.816],[0.116,7.274],[0.148,9.929],[0.171,12.14],[0.191,11.695],[0.2,10.719],[0.209,9.24],[0.23,7.667],[0.255,6.488],[0.305,5.505],[0.375,4.816],[0.477,4.62],[0.58,4.62],[0.671,4.521],[0.746,4.226],[0.786,4.325],[0.802,3.145],[0.825,1.572],[0.86,0]];
-enginesData["C6"]  = [[0,0],[0.031,0.946],[0.092,4.826],[0.139,9.936],[0.192,14.09],[0.209,11.446],[0.231,7.381],[0.248,6.151],[0.292,5.489],[0.37,4.921],[0.475,4.448],[0.671,4.258],[0.702,4.542],[0.723,4.164],[0.85,4.448],[1.063,4.353],[1.211,4.353],[1.242,4.069],[1.303,4.258],[1.468,4.353],[1.656,4.448],[1.821,4.448],[1.834,2.933],[1.847,1.325],[1.86,0]];
-enginesData["D12"] = [[0,0],[0.049,2.569],[0.116,9.369],[0.184,17.275],[0.237,24.258],[0.282,29.73],[0.297,27.01],[0.311,22.589],[0.322,17.99],[0.348,14.126],[0.386,12.099],[0.442,10.808],[0.546,9.876],[0.718,9.306],[0.879,9.105],[1.066,8.901],[1.257,8.698],[1.436,8.31],[1.59,8.294],[1.612,4.613],[1.65,0]];
-enginesData["C2"]  = [[0,0],[0.297,2],[0.477,5],[0.702,2],[4.8,2],[5.1,0]];
-enginesData["D3"]  = [[0,0],[0.305,5],[0.589,9],[0.702,6],[1.063,2,5],[1.86,2],[5.6,2],[6,0]];
-enginesData["TEST1"]  = [[0,0],[0.1,0.95],[0.2,1.8],[0.3,2.55],[0.4,3.2],[0.5,3.75],[0.6,4.2],[0.7,4.55],[0.8,4.8],[0.9,4.95],[1,5],[2,5],[3,5],[4,5],[5,5],[6,5],[7,5],[8,5],[9,5],[10,5],[11,5],[12,5],[13,5],[14,5],[15,5],[16,5],[17,5],[18,5],[19,5],[19.1,4.95],[19.2,4.8],[19.3,4.55],[19.4,4.2],[19.5,3.75],[19.6,3.2],[19.7,2.55],[19.8,1.8],[19.9,0.95],[20,0]];
-
-var enginesSpecs = {};
-// Mass of propellant - Mass before firing - Mass after firing
-enginesSpecs["A8"]   = [ .0033 , .01635 , .0102 ];
-enginesSpecs["B6"]   = [ .0056 , .01823 , .0097 ];
-enginesSpecs["C6"]   = [ .0108 , .02400 , .0094 ];
-enginesSpecs["D12"]  = [ .0211 , .04260 , .0160 ]; 	
-enginesSpecs["C2"]   = [ .0108 , .02400 , .0094 ]; // Unknown - copied directly from Estes C6
-enginesSpecs["D3"]   = [ .0108 , .02400 , .0094 ]; // Unknown - copied directly from Estes C6
-enginesSpecs["TEST1"]= [ .0814 , .46252 , .3811 ];
-
 var cd1 = 0.65;	// Drag coefficient of rocket. Value is DARK legacy.
 var cd2 = 0.75; // Drag coefficient of parachute. Value is from http://www.rocketshoppe.com/info/The_Mathematics_of_Parachutes.pdf
+
+var rodl = 1; // Length of launch rod in meters
 
 var opts = {
 	lines: 13, // The number of lines to draw
@@ -50,19 +27,106 @@ var opts = {
 	top: '50%', // Top position relative to parent
 	left: '50%' // Left position relative to parent
 };
+
 var target = document.getElementById('container');
 var spinner = new Spinner(opts);
+
+var engineData = "";
+var engine = {};
+
+// Because of an error in the definition of the eng file format, and/or because of wrong use,
+// I choose here to include extra data not in the eng files.
+// I assume, that propellant mass in the eng file is just that, the mass of the propellant,
+// thus not including mass of delay charge, ejection charge or clay cap.
+// Therefore, I must here include also Mass After Firing - from data sheets.
+
+var massAfterFiring = [];
+massAfterFiring["Estes_A8"]  = 0.0102;
+massAfterFiring["Estes_B6"]  = 0.0097;
+massAfterFiring["Estes_C6"]  = 0.0094;
+massAfterFiring["Estes_D12"] = 0.0160;
+massAfterFiring["Klima_A6"]  = 0.0100; // Unknown - using estimated mass
+massAfterFiring["Klima_B4"]  = 0.0100; // Unknown - using estimated mass
+massAfterFiring["Klima_C2"]  = 0.0100; // Unknown - using estimated mass
+massAfterFiring["Klima_D2"]  = 0.0100; // Unknown - using estimated mass
 
 function gid(id)
 {
 	return document.getElementById(id);
 }
 
+function loadEngine(engineFormValue) {
+	var filename = engineFormValue.split("-")[0];
+	var delay    = engineFormValue.split("-")[1];
+	var xmlhttp;
+	if (window.XMLHttpRequest) {
+		xmlhttp = new XMLHttpRequest();
+	} else {
+		// code for older browsers
+		xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+	}
+	xmlhttp.onreadystatechange = function() {
+		if (this.readyState == 4 && this.status == 200) {
+			readEngine(this.responseText,filename,delay);
+		}
+	};
+	xmlhttp.open("GET", filename+".eng", true);
+	xmlhttp.send();
+}
+
 function init()
 {
-	 $('#waiting').hide();
-	 $("div.engine.selected input").show();
-	 chart(enginesData["A8"], "#thrustcurve", "Thrust Curve", "Time / [s]", "Thrust / [N]",0);
+	$('#waiting').hide();
+	selectEngine("Estes_A8-3");
+}
+
+function readEngine(responseText,filename,delay) {
+	engineData = responseText.split("\r\n"); // Splitting the file into lines
+	var engineSpecsRead = false;
+	var engineThrust = [];
+	engineThrust.push([0,0]);
+	for(var i in engineData) // Looping through the lines
+	{
+		if( engineData[i].substr(0,1) != ";" ) {
+			// This line is not a comment
+			var engineLineArray = engineData[i].trim().split(" ");
+			if( !engineSpecsRead ) // First line - engine specs
+			{
+				// Engine specs haven't been read yet, so we're doing it now
+				// See format on http://www.thrustcurve.org/raspformat.shtml
+				var engineSpecs = engineLineArray;
+				engineSpecsRead = true;
+			} else {
+				// Engine specs have been read, so this must be thrust data
+				if( engineLineArray.length == 2 ) {
+					engineThrust.push( [ parseFloat(engineLineArray[0]) , parseFloat(engineLineArray[1]) ] );
+				}
+			}
+		}
+	}
+	
+	engine.delay            = parseFloat(delay);
+	engine.delays           = engineSpecs[3].split("-");
+	engine.diameter         = parseFloat(engineSpecs[1]);
+	engine.length           = parseFloat(engineSpecs[2]);
+	engine.manufacturer     = engineSpecs[6];
+	engine.massAfterFiring  = massAfterFiring[filename];
+	engine.name             = engineSpecs[0];
+	engine.propellantWeight = parseFloat(engineSpecs[4]);
+	engine.thrust           = engineThrust;
+	engine.totalWeight      = parseFloat(engineSpecs[5]);
+
+	console.debug(engine);
+
+	chart(engine.thrust,"#thrustcurve","Thrust Curve","Time / [s]","Thrust / [N]",0);
+	
+	heavycheck();
+	diametercheck();
+}
+
+function selectEngine(engineFormValue)
+{
+	loadEngine(engineFormValue);
 }
 
 function sign(x)
@@ -78,15 +142,11 @@ function sign(x)
 
 function heavycheck()
 {
-	var engine      = gid('engine').value;
-	var engineData  = enginesData[engine.split("-")[0]];
-	var engineSpecs = enginesSpecs[engine.split("-")[0]];
-	var m           = parseFloat(gid("m").value)/1000;
-	m               = m + engineSpecs[1];
+	var m = parseFloat(gid("m").value)/1000 + engine.totalWeight;
 	var engineY = [];
-	for(var n in engineData)
+	for(var n in engine.thrust)
 	{
-		engineY[n] = engineData[n][1];
+		engineY[n] = engine.thrust[n][1];
 	}
 	var maxThrust = parseFloat(Math.max.apply(Math, engineY));
 	if( maxThrust <= m*g )
@@ -101,25 +161,42 @@ function heavycheck()
 	}
 }
 
-function getEngineDiameter(engine)
-{
-	if( engine.substr(0,1) == "D" )
-	{
-		return(0.024);
-	}
-	else
-	{
-		return(0.018);
-	}
-}
-
 function diametercheck()
 {
-	var engineDiam  = getEngineDiameter( gid('engine').value );
-	var diam        = parseFloat(gid("d").value)/1000;
-	if( diam < engineDiam )
+	var diam            = parseFloat(gid("d").value);
+	var checkDiam       = engine.diameter;
+	var numberOfEngines = parseFloat(gid("noe").value);
+	switch( numberOfEngines ) {
+		case 1:
+			checkDiam = engine.diameter;
+			break;
+		case 2:
+			checkDiam = engine.diameter * 2;
+			break;
+		case 3:
+		case 4:
+		case 5:
+			checkDiam = engine.diameter * ( 1 + 1 / Math.sin((360/numberOfEngines)/180*3.14159265) );
+			break;
+		case 6:
+			checkDiam = engine.diameter * 3;
+			break;
+		case 7:
+			checkDiam = engine.diameter * 3;
+			break;
+		default:
+			checkDiam = engine.diameter;
+	}
+	if( diam < checkDiam )
 	{
-		gid("status2").innerHTML = "The rocket diameter must at least match the diameter of the selected engine (" + engineDiam*1000 + " mm).";
+		if( numberOfEngines == 1 )
+		{
+			gid("status2").innerHTML = "The rocket diameter must at least match the diameter of the selected engine (" + engine.diameter + " mm).";
+		}
+		else
+		{
+			gid("status2").innerHTML = "The rocket diameter must at least match the "+numberOfEngines+" engines arranged in a symmetrical<br/>pattern (" + checkDiam.toFixed(2) + " mm).";
+		}
 		$("#status2").slideDown();
 		$('html, body').animate({scrollTop: $("#step1").offset().top}, 2000);
 	}
@@ -127,16 +204,6 @@ function diametercheck()
 	{
 		$("#status2").slideUp();
 	}
-}
-
-function selectEngine(engine,obj)
-{
-	chart(enginesData[engine.split('-')[0]], '#thrustcurve', 'Thrust Curve', 'Time / [s]', 'Thrust / [N]',0);
-	gid("engine").value = engine;
-	$("div.engine.selected").removeClass("selected");
-	$(obj).addClass("selected");
-	heavycheck();
-	diametercheck();
 }
 
 function transpose(array)
@@ -200,7 +267,9 @@ function start()
 {
 	$("#container").css({"opacity":.5});
 	showSpinner();
-	setTimeout(function(){launch();},1); // Strange function which forces the execution of commands issued until now, and then starts execution of the function inside the settimeout.
+	setTimeout(function(){launch();},1);
+	// Strange function which forces the execution of commands issued until now,
+	// and then starts execution of the function inside the settimeout.
 }
 
 function launch()
@@ -208,6 +277,8 @@ function launch()
 	gid("launchbutton").blur();
 	gid("ignition").innerHTML         = "";
 	gid("liftoff").innerHTML          = "";
+	gid("rodt").innerHTML             = "";
+	gid("rodv").innerHTML             = "";
 	gid("burnout_time").innerHTML     = "";
 	gid("burnout_altitude").innerHTML = "";
 	gid("burnout_velocity").innerHTML = "";
@@ -219,27 +290,28 @@ function launch()
 	gid("landing_time").innerHTML     = "";
 	gid("landing_velocity").innerHTML = "";
 	
+	gid("deploy_time_warning").innerHTML       = "";
+	gid("rod_velocity_warning").innerHTML      = "";
+	gid("acceleration_warning").innerHTML      = "";
+	gid("deploy_velocity_warning").innerHTML   = "";
+	gid("landing_velocity_warning").innerHTML  = "";
+	
 	// Read entered values for mass and diameters
 	var m  = parseFloat(gid("m").value)/1000;
 	var d  = parseFloat(gid("d").value)/1000;
 	var d2 = parseFloat(gid("d2").value)/100;
 	var cd = cd1;
 
-	// Get engine data
-	var engine          = gid('engine').value;
-	var engineData      = enginesData[engine.split("-")[0]];
-	var engineSpecs     = enginesSpecs[engine.split("-")[0]];
-	var delay           = parseFloat(engine.split("-")[1]);
 	var numberOfEngines = parseFloat(gid("noe").value);
 
 	// Make engine x and y value arrays for splines
 	var engineX = [];
 	var engineY = [];
 	var ks      = [];
-	for(var n in engineData)
+	for(var n in engine.thrust)
 	{
-		engineX[n] = engineData[n][0];
-		engineY[n] = engineData[n][1];
+		engineX[n] = engine.thrust[n][0];
+		engineY[n] = engine.thrust[n][1];
 		ks[n]      = 0; // Use zeros as first derivatives for the CSPL implementation http://blog.ivank.net/interpolation-with-cubic-splines.html
 						// - until Ivan answers my question about how to find the "real" derivatives...
 	}
@@ -253,12 +325,12 @@ function launch()
 		Thrust[i] = CSPL.evalSpline(i*dt, engineX, engineY, ks);
 	}
 	
-	if( delay > 0 )
+	if( engine.delay > 0 )
 	{
-		mDelay     = engineSpecs[1]-engineSpecs[2]-engineSpecs[0];	// Mass of delay charge, ejection charge and clay cap
-		mDelay     = mDelay/2;										// Assuming ejection charge and cap together weighs about the same as the delay charge
+		mDelay     = engine.totalWeight-engine.propellantWeight-engine.massAfterFiring;	// Mass of delay charge, ejection charge and clay cap
+		mDelay     = mDelay/2;															// Assuming ejection charge and cap together weighs about the same as the delay charge
 		mDelay     = mDelay * numberOfEngines;
-		dmDelay    = dt/delay*mDelay;
+		dmDelay    = dt/engine.delay*mDelay;
 	}
 	else
 	{
@@ -276,11 +348,11 @@ function launch()
 	{
 		ThrustSum += Thrust[n]*numberOfEngines;
 	}
-	var PropMass = engineSpecs[0]*numberOfEngines;
+	var PropMass = engine.propellantWeight*numberOfEngines;
 	var TotalImp = ThrustSum*dt
 	var SpeciImp = TotalImp/(PropMass*g)
 
-	m       = m + engineSpecs[1]*numberOfEngines;
+	m       = m + engine.totalWeight*numberOfEngines;
 	var A   = Math.PI*Math.pow(d /2,2);
 	var A2  = Math.PI*Math.pow(d2/2,2);
 
@@ -294,6 +366,7 @@ function launch()
 	var done      = false;
 	var ignition  = false;
 	var liftoff   = false;
+	var rod       = false;
 	var burnout   = false;
 	var apogee    = false;
 	var deploy    = false;
@@ -311,7 +384,6 @@ function launch()
 	var q2      = [];
 	var gees2   = [];
 	var weight2 = [];
-	var T2      = [];
 
 	var t3      = [];
 	var thrust3 = [];
@@ -329,7 +401,6 @@ function launch()
 	while(!done)
 	{
 
-		//if( t < Burntime && !Thrust[i].isNaN )
 		if( t < Burntime && i < Thrust.length )
 		{
 			thrust = Thrust[i]*numberOfEngines;
@@ -345,21 +416,16 @@ function launch()
 			alert("thrust isNaN in step "+i);
 		}
 
-		// ATMOSPHERE
-
-		var T    = T0 + L*h;
-		var p    = p0*Math.pow( 1-L*h/T0 , g*M/(R*L) );
-		var rho  = p*M/(R*T);
-		
-		var q    = 0.5 * rho * Math.pow(v,2); // Dynamic Pressure https://en.wikipedia.org/wiki/Max_Q
-		var drag = - q * cd * A * sign(v);
-		
+		var drag   = -0.5 * rho * cd * A * Math.pow(v,2) * sign(v);
 		if( isNaN(drag) )
 		{
 			done = true;
 			alert("drag isNaN in step "+i);
 		}
 
+		// Dynamic Pressure https://en.wikipedia.org/wiki/Max_Q
+		var q = 0.5 * rho * Math.pow(v,2);
+		
 		if( ignition && !burnout )
 		{
 			var dm = PropMass * TotalImpulseSoFar / TotalImp;
@@ -435,6 +501,17 @@ function launch()
 			gid("liftoff").innerHTML = t.toFixed(2);
 		}
 
+		if( !rod && h > rodl )
+		{
+			rod = true;
+			gid("rodt").innerHTML = t.toFixed(2);
+			gid("rodv").innerHTML = v.toFixed(2);
+			if( v < 10 ) {
+				console.log(v);
+				gid("rod_velocity_warning").innerHTML = "<span style=\"color:#EE0000;font-weight:bold;\">⚠</span> Low rod velocity";
+			}
+		}
+
 		if( ignition && !burnout && ( thrust == 0 ) )
 		{
 			burnout = true;
@@ -460,17 +537,23 @@ function launch()
 			gid("apogee_altitude").innerHTML = h.toFixed(2);
 		}
 
-		if( ( delay != 0 ) && t >= ( Burntime + delay ) && !deploy )
+		if( ( engine.delay != 0 ) && t >= ( Burntime + engine.delay ) && !deploy )
 		{
 			deploy = true;
 			cd = cd2;
-			A  = A2;
+			A  = Math.max(A,A2);
 			m  = m - mDelay;
 			//dt = 0.001; // Temporarily switching to millisecond precision for large parachutes
 			gid("deploy_time").innerHTML     = t.toFixed(2);
 			gid("deploy_altitude").innerHTML = h.toFixed(2);
 			gid("deploy_velocity").innerHTML = v.toFixed(2);
 			$(".deploy").show();
+			if( !apogee ) {
+				gid("deploy_time_warning").innerHTML = "<span style=\"color:#EE0000;font-weight:bold;\">⚠</span> Deployment before apogee";
+			}
+			if( Math.abs(v) > 10 ) {
+				gid("deploy_velocity_warning").innerHTML = "<span style=\"color:#EE0000;font-weight:bold;\">⚠</span> High deployment velocity";
+			}
 		}
 
 		//if( deploy && v2[i-1] == v ) // Terminal velocity reached
@@ -493,6 +576,15 @@ function launch()
 				gid("status3").innerHTML = "Landing not detected within preset runtime - stopping";
 				$("#status3").fadeIn();
 			}
+			if( v < -10 ) {
+				gid("landing_velocity_warning").innerHTML = "<span style=\"color:#EE0000;font-weight:bold;\">⚠</span> High landing velocity";
+			}
+			if( !deploy ) {
+				gid("deploy_time_warning").innerHTML = "<span style=\"color:#EE0000;font-weight:bold;\">⚠</span> Deployment after landing";
+			}
+			if( engine.delay == 0 ) {
+				gid("deploy_time_warning").innerHTML = "<span style=\"color:#EE0000;font-weight:bold;\">⚠</span> No deployment charge";	
+			}
 		}
 
 		if( deploy && !apogee ) // Deployment happened before apogee - move deploy section before apogee section
@@ -512,8 +604,8 @@ function launch()
 		gees2[i]   = gees;
 		m2[i]      = m;
 		weight2[i] = weight;
-		//T2[i]      = T;
 
+		// WHAT IS THIS? Why did I write this?
 		if(parseFloat(i/10)==parseInt(i/10,10))
 		{
 			t3[i/10]      = t;
@@ -536,24 +628,25 @@ function launch()
 	{
 		t3[n] = parseFloat(t3[n]).toFixed(2);
 	}
+
+	var maxgees               = Math.max(...gees2).toFixed(1);
+	gid("max_gees").innerHTML = maxgees;
+	if( maxgees > 20 )
+	{
+		gid("acceleration_warning").innerHTML = "<span style=\"color:#EE0000;font-weight:bold;\">⚠</span> High G-load";	
+	}
+
+
     chart(transpose([t2,h2]),"#altitude","Altitude","Time / [s]","Altitude / [m]",0)
 	chart(transpose([t2,v2]),"#velocity","Velocity","Time / [s]","Velocity / [m/s]",null)
 	chart(transpose([t2,a2]),"#acceleration","Acceleration","Time / [s]","Acceleration / [m/s²]",null)
 	chart(transpose([t2,gees2]),"#gees","G-force","Time / [s]","G")
 	chart(transpose([t2,m2]),"#mass","Mass","Time / [s]","Mass / [kg]")
-	//chart(transpose([t2,F2]),"#force","Force","Time / [s]","Force / [N]")
 	chart(transpose([t2,drag2]),"#drag","Drag","Time / [s]","Drag / [N]")
-	//chart(transpose([t2,weight2]),"#weight","Weight","Time / [s]","Weight / [N]")
 	chart(transpose([t2,thrust2]),"#thrust","Thrust","Time / [s]","Thrust / [N]",0,Burntime)
-	//chart(transpose([t2,ks]),"#ks","ks","Time / [s]","ks",0,Burntime)
-	//for(var n in t2)
-	//{
-	//	document.writeln(t2[n]+" "+h2[n]+"<br>");
-	//}
-	//chart(transpose([t2,T2]),"#temp","Temperature","Time / [s]","Temperature / [K]")
-	//document.write(t2);
 	hideSpinner();
 	$("#container").css({"opacity":1});
 	$("#output").slideDown();
 	$('html, body').animate({scrollTop: $("#results").offset().top}, 2000);
+
 }

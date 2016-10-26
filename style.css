@@ -23,23 +23,24 @@ body
 	background-color: 	#F5F5DC;
 	border:				1px solid #A5A52A;
 	border-radius:		10px;
-	padding:			20px;
 	margin:				auto;
-	min-width: 			900px;
+	padding:			20px;
+	min-width: 			800px;
 	max-width:			1200px;
-	width:				80%;
+	width:				50%;
 }
 h1
 {
 	font-family:		Bitter,'sans-serif';
+	font-size:			2em;
+	margin:				0;
 	text-align: 		center;
-	font-size:			3em;
 
 }
 h2
 {
 	font-family:		Play,'sans-serif';
-	font-size: 			2em;
+	font-size: 			1.5em;
 	margin:				0;
 	padding:		 	20px 0 20px 0;
 }
@@ -52,6 +53,10 @@ td
 {
 	text-align: 		right;
 }
+table#setup td
+{
+	text-align:			left;
+}
 span.unit
 {
 	display: 			inline-block;
@@ -63,19 +68,21 @@ input
 {
 	font-family:		Bitter,'sans-serif';
 	font-size:			1em;
-	margin-left: 		1em;
 	text-align:			right;
 	width:				4em;
 }
 #thrustcurve
 {
-	float:				right;
-	height:				373px;
+	xfloat:				right;
+	xheight:			250px;
+	width:				80%;
+	margin:				auto;
+	margin-top:			20px;
 }
 select
 {
-	font-family:		Play,'sans-serif';
-	font-size:			2em;
+	font-family:		Bitter,'sans-serif';
+	font-size:			1em;
 }
 div.engine
 {
@@ -113,8 +120,9 @@ div#step2 p input
 }
 div#step3
 {
-	clear:both;
-	margin:0;
+	clear:				both;
+	margin:				0;
+	padding-top:		20px;
 }
 div#step3 h2
 {
@@ -122,7 +130,8 @@ div#step3 h2
 	margin:				0;
 	padding:			20px 0 0 0;
 }
-div#step3 button
+div#step3 button,
+div#step3 input
 {
 	margin:				auto;
 	cursor:				pointer;
@@ -134,8 +143,10 @@ div#step3 button
 	display:			block;
 	border:				2px solid #000000;
 	border-radius:		10px;
+	width:				auto;
 }
-div#step3 button:hover
+div#step3 button:hover,
+div#step3 input:hover
 {
 	background-color:	#0D0;
 }
@@ -178,19 +189,12 @@ div#output_graphs
 	clear:				both;
 	margin-top:			20px;
 }
-div#output_graphs div.left
+div#output_graphs div
 {
-	float:				left;
-	width:				50%;
-}
-div#output_graphs div.right
-{
-	float:				left;
-	width:				50%;
-}
-div#output_graphs div div
-{
-	margin-top: 20px;
+	margin:				auto;
+	margin-top:			20px;
+	margin-bottom:		20px;
+	width:				80%;
 }
 div#footer
 {
@@ -207,4 +211,8 @@ div#about
 div#about h2
 {
 	padding-bottom:		0;
+}
+td.warning
+{
+	text-align: left;
 }
