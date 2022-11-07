@@ -3,13 +3,9 @@
 	<head>
 		<meta charset="utf-8">
 		<title>Model Rocket Simulator</title>
-		<link href="http://fonts.googleapis.com/css?family=Bitter" rel="stylesheet" type="text/css"/>
-		<link href="http://fonts.googleapis.com/css?family=Play" rel="stylesheet" type="text/css"/>
 		<link rel="stylesheet" href="style.css" type="text/css">
-		<!--<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>-->
-		<!--<script src="http://code.highcharts.com/highcharts.js"></script>-->
 		<script src="jquery-1.8.2.min.js"></script>
-		<script src="highcharts.js"></script>
+		<script src="https://code.highcharts.com/highcharts.js"></script>
 		<script src="CSPL.js"></script>
 		<script src="spin.min.js"></script>
 		<script src="modelrocketsimulator.js"></script>
@@ -24,7 +20,7 @@
 				<form action="#" method="get" onsubmit="start();return false;">
 				<table id="setup">
 					<tr>
-						<th>Rocket mass without engine</th>
+						<th>Rocket mass at liftoff without motor(s)</th>
 						<td><input type="text" name="m" id="m" value="34.0" onkeyup="heavycheck();"/><span class="unit">g</span></td>
 					</tr>
 					<tr>
@@ -38,9 +34,9 @@
 				</table>
 			</div>
 			<div id="step2">
-				<!--<h2>Step 2. Choose an engine</h2>-->
+				<!--<h2>Step 2. Choose a motor</h2>-->
 					<tr>
-						<th>Engine</th>
+						<th>Motor</th>
 						<td>
 							<select name="engine" id="engine" onchange="selectEngine(this.value);">
 								<option value="Estes_A8-3">Estes A8-3</option>
@@ -49,24 +45,80 @@
 								<option value="Estes_C6-7">Estes C6-7</option>
 								<option value="Estes_D12-3">Estes D12-3</option>
 								<option value="Estes_D12-5">Estes D12-5</option>
+								<option value="Estes_F15-5">Estes F15-5</option>
+								<option value="Estes_F26-5">Estes F26-5</option>
+								<option value="Estes_F50-5">Estes F50-5</option>
 								<option value="Klima_A6-4">Klima A6-4</option>
 								<option value="Klima_B4-4">Klima B4-4</option>
+								<option value="Klima_C6-3">Klima C6-3</option>
+								<option value="Klima_C6-3">Klima C6-5</option>
+								<option value="Klima_C6-3">Klima C6-7</option>
+								<option value="Klima_D9-3">Klima D9-3</option>
+								<option value="Klima_D9-3">Klima D9-5</option>
+								<option value="Klima_D9-3">Klima D9-7</option>
+								<option value="Klima_D9-3">Klima D9-9</option>
+								<option value="Klima_D9-3">Klima D9-11</option>
+								<option value="Klima_D9-3">Klima D9-13</option>
+								<!--
 								<option value="Klima_C2-0">Klima C2-0</option>
 								<option value="Klima_D3-0">Klima D3-0</option>
+								<option value="Zink_C6-0">Zink C6-0</option>
+								<option value="Zink_D12-0">Zink D12-0</option>
+								<option value="Zink_D10-0">Zink D10-0</option>
+								<option value="Zink_E19-0">Zink E19-0</option>
+								<option value="Zink_E21-0">Zink E21-0</option>
+							-->
 							</select>
 						</td>
 					</tr>
 					<tr>
-						<th>Number of engines</th>
-						<td><input type="number" id="noe" value="1" min="1" max="7" onkeyup="if(this.value>7){this.value=7;};if(this.value<1){this.value=1;}" onchange="diametercheck();"/></td>
+						<th>Number of parallel motors</th>
+						<!--<td><input type="number" id="noe" value="1" min="1" max="7" onkeyup="if(this.value>7){this.value=7;};if(this.value<1){this.value=1;}" onchange="diametercheck();heavycheck();"/></td>-->
+						<td><input type="text" id="noe" value="1" onchange="diametercheck();heavycheck();"/></td>
 					</tr>
 				</table>
+				<!--<div style="float:right;">
+					<table>
+							<tr>
+								<th colspan="2">Motor Data</th>
+							</tr>
+							<tr>
+								<th>Manufacturer</th>
+								<td></td>
+							</tr>
+							<tr>
+								<th>Class</th>
+								<td></td>
+							</tr>
+							<tr>
+								<th>Total impulse</th>
+								<td></td>
+							</tr>
+							<tr>
+								<th>Manufacturer</th>
+								<td></td>
+							</tr>
+							<tr>
+								<th>Manufacturer</th>
+								<td></td>
+							</tr>
+							<tr>
+								<th>Manufacturer</th>
+								<td></td>
+							</tr>
+							<tr>
+								<th>Manufacturer</th>
+								<td></td>
+							</tr>
+						</table>
+				</div>
+			-->
 				<div id="thrustcurve"></div>
 			</div>
 			<div id="step3">
 				<!--<h2>Step 3.</h2>-->
 				<!--<button id="launchbutton" onclick="start();"/>Launch</button>-->
-				<input type="submit" id="launchbutton" value="Launch"/>
+				<input type="submit" id="launchbutton" value="Launch" style="display: block; padding:10px;"/>
 			</div>
 		</form>
 			<div id="output">
@@ -222,42 +274,31 @@
 				<div style="clear:both;"><!-- --></div>
 			</div>
 			<div style="clear:both;"><!-- --></div>
-			<div id="footer">By Steen Eiler Jørgensen 2014&minus;2016 - <a href="#" onclick="$('#about').slideToggle();$('html, body').animate({scrollTop: $('#about').offset().top}, 2000);return false;">About</a> - Charts by <a href="http://www.highcharts.com/">Highcharts</a> - Cubic Spline Interpolation by <a href="http://blog.ivank.net/">Ivan Kuckir</a></div>
+			<div id="footer">By Steen Eiler Jørgensen 2014&minus;2020 - <a href="#" onclick="$('#about').slideToggle();$('html, body').animate({scrollTop: $('#about').offset().top}, 2000);return false;">About</a> - Charts by <a href="http://www.highcharts.com/">Highcharts</a></div>
 			<div id="about">
 				<h2>About</h2>
-				<p>This is a very simple model rocket simulation program. It takes <a href="http://www.nar.org/standards-and-testing-committee/nar-certified-motors/">published thrust curve data</a> and interpolates that using cubic splines.</p>
+				<p>This is a very simple model rocket simulation program. It takes <a href="http://www.nar.org/standards-and-testing-committee/nar-certified-motors/">published thrust curve data</a> and interpolates that linearly.</p>
 				<p>Features:</p>
 				<ul>
 					<li>dt = 10 ms</li>
 					<li>g = 9.8 m/s²</li>
 					<li>Air density calculation is based on a temperature lapse rate of -0.0065 K/m, so only valid up until 11 km.</li>
-					<li>C<sub>d</sub> = 0.65 (<a href="http://dark.dk/documents/technical_notes/Aeronote.pdf" target="_blank">DARK</a> legacy)</li>
+					<li>C<sub>d</sub> = 0.5 (Don't ask. Okay, ask.)</li>
 				</ul>
 				<p>Future improvements I'm considering:</p>
 				<ul>
 					<li>Complete modeling of the International Standard Atmosphere</li>
 					<li>More detailed gravity model: Decreasing gravitational acceleration with altitude</li>
-					<li>More rocket engines :)</li>
+					<li>More rocket motors :)</li>
 					<li>Real time simulation (with JavaScript!)</li>
 					<li>Two-dimensional simulation for wind, downrange distance and gravity turn</li>
 					<li>Actually measuring the drag coefficient of a real rocket</li>
-					<li>Variable timesteps (Runge-Kutta, anyone?)</li>
+					<li>Variable timesteps</li>
 					<li>Support for multistage rockets</li>
 				</ul>
 				<p>Let me know what you think!</p>
 				<p><a href="https://twitter.com/oz1sej">Twitter</a> | <a href="mailto:rocksim@silicium.dk">Email</a></p>
 			</div>
 		</div>
-		<script type="text/javascript">
-		  var _gaq = _gaq || [];
-		  _gaq.push(['_setAccount', 'UA-21343177-1']);
-		  _gaq.push(['_trackPageview']);
-
-		  (function() {
-		    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-		    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-		    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-		  })();
-		</script>
 	</body>
 </html>
